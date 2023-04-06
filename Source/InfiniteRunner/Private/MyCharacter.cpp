@@ -14,15 +14,20 @@ AMyCharacter::AMyCharacter()
 	//SpringArm Setup
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
 	SpringArm->SetupAttachment(RootComponent);
-	SpringArm->TargetArmLength = 200.f;
+	SpringArm->TargetArmLength = 500.f;
+	SpringArm->TargetOffset.Z = 100.f;
 	SpringArm->bEnableCameraLag = true;
-	SpringArm->CameraLagSpeed = 15.f;
+	SpringArm->CameraLagSpeed = 5.f;
 
 	//Camera Setup
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->FieldOfView = 90.f;
 
+	//Lane Array
+	LanePositions.Add(0.f);
+	LanePositions.Add(0.f);
+	LanePositions.Add(0.f);
 }
 
 // Called when the game starts or when spawned
@@ -74,7 +79,6 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		//Add Bindings here >>
 		//Switching lanes
 		MyEnhancedInputComponent->BindAction(IA_SwitchLane, ETriggerEvent::Started, this, &AMyCharacter::SwitchLane);
-		MyEnhancedInputComponent->BindAction(IA_SwitchLane, ETriggerEvent::Completed, this, &AMyCharacter::SwitchLane);
 		//Jumping
 		MyEnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Started, this, &AMyCharacter::Jump);
 		
@@ -89,21 +93,59 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AMyCharacter::SetupLanes()
 {
+	//Fill array with proper values
 	LanePositions[1] = GetActorLocation().Y;
-	LanePositions[0] = LanePositions[1] - 50.f;
-	LanePositions[2] = LanePositions[1] + 50.f;
-
+	LanePositions[0] = LanePositions[1] - 175.f;
+	LanePositions[2] = LanePositions[1] + 175.f;
+	//"Middle position"
 	LaneIndex = 1;
 }
 
+
 void AMyCharacter::SwitchLane(const FInputActionInstance& Instance)
 {
-	float SwitchValue = Instance.GetValue().Get<float>();
-	int NewLaneValue = FMath::RoundToInt(SwitchValue);
-	if(SwitchValue < 0.f){NewLaneValue--;}
+    if (bIsMoving){return;}
 
-	LaneIndex = NewLaneValue;
+    bIsMoving = true;
+
+    float SwitchValue = Instance.GetValue().Get<float>();
+    int NewLaneValue = FMath::RoundToInt(SwitchValue);
+
+    LaneIndex += NewLaneValue;
+    LaneIndex = FMath::Clamp(LaneIndex, 0, LanePositions.Num() - 1);
+
+    GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, "Current Lane: " + FString::FromInt(LaneIndex));
+
+    FVector CurrentLocation = GetActorLocation();
+    FVector TargetLocation = FVector(CurrentLocation.X, LanePositions[LaneIndex], CurrentLocation.Z);
+
+    // Calculate the time needed for the character to reach the target location
+    float DistanceToTarget = FVector::Dist(CurrentLocation, TargetLocation);
+    float MoveTime = DistanceToTarget / LaneSwitchSpeed;
+
+    // Use a timer to smoothly move the character to the target location
+    GetWorldTimerManager().SetTimer(MovementTimerHandle, this, &AMyCharacter::OnMovementComplete, MoveTime, false);
+    GetWorldTimerManager().SetTimer(MovementUpdateHandle, FTimerDelegate::CreateUObject(this, &AMyCharacter::OnMoveUpdate, TargetLocation), 0.001, true);
 }
+
+void AMyCharacter::OnMoveUpdate(FVector TargetLocation)
+{
+    FVector CurrentLocation = GetActorLocation();
+    FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, GetWorld()->DeltaTimeSeconds, LaneSwitchSpeed);
+    SetActorLocation(NewLocation);
+	
+    if (FVector::DistSquared(CurrentLocation, TargetLocation) < 0.01f)
+    {
+        GetWorldTimerManager().ClearTimer(MovementUpdateHandle);
+        OnMovementComplete(); 
+    }
+}
+
+void AMyCharacter::OnMovementComplete()
+{
+    bIsMoving = false;
+}
+
 
 void AMyCharacter::Jump()
 {

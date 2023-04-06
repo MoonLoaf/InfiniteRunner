@@ -13,7 +13,6 @@ class INFINITERUNNER_API AMyCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	AMyCharacter();
-
 	
 	//Components	
 	UPROPERTY(EditAnywhere, Category="Camera")
@@ -24,6 +23,16 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputComponent* MyInputComponent;
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+	void SetupLanes();
+
+	UPROPERTY(EditAnywhere, Category="Movement")
+	float LaneSwitchSpeed = 1.f;
 
 protected:
 	// Called when the game starts or when spawned
@@ -43,22 +52,24 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input Actions")
 	UInputAction* IA_Jump;
 	
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-
-	void SetupLanes();
-
 private:
+
+	FTimerHandle MovementTimerHandle;
+	
+	FTimerHandle MovementUpdateHandle;
 
 	void SwitchLane(const FInputActionInstance& Instance);
 
 	void Jump();
 
+	void OnMovementComplete();
+	
+	void OnMoveUpdate(FVector TargetLocation);
+	
 	UPROPERTY(EditAnywhere, Category="Lane Positions")
 	TArray<float> LanePositions;
 
 	int LaneIndex;
+
+	bool bIsMoving;
 };
