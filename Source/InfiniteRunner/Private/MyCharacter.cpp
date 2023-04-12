@@ -23,6 +23,8 @@ AMyCharacter::AMyCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->FieldOfView = 90.f;
+	//Camera->SetRelativeLocation(FVector(-1100.f, 0.f, 350.f));
+	//Camera->SetRelativeRotation(FQuat(0.f, -20.f, 0.f, 0.f));
 
 	//Lane Array
 	LanePositions.Add(0.f);
