@@ -19,8 +19,8 @@ public:
 	UPROPERTY(EditAnywhere, Category="Loading")
 	class UBoxComponent* ChunkGenerationBox;
 
-	UPROPERTY(EditAnywhere, Category="Obstacles")
-	TArray<UStaticMeshComponent*> ObstacleArray;
+	UPROPERTY(EditAnywhere, Category = "Obstacles")
+	TArray<TSubclassOf<AActor>> ObstacleClasses;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "GameMode")
 	TWeakObjectPtr<AMyRunnerGameMode> MyGameMode;
@@ -28,24 +28,33 @@ public:
 	//Functions
 	AWorldChunk();
 
+	virtual ~AWorldChunk() override;
+
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
 
-	void MoveChunk();
-
-	void GenerateObstacles();
-
+	float GetChunkEnd() const;
+	
 	void IncreaseGameSpeed();
 	
 protected:
-	// Called when the game starts or when spawned
+	
 	virtual void BeginPlay() override;
 
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	
 	virtual void PostInitializeComponents() override;
+
+	
+	
 private:	
 
+	void GenerateObstacles();
+
+	class USceneComponent* ObstacleTransformParent;
+
+	static const FVector SpawnPoints[];
+
+	TArray<AActor*> SpawnedObstacles;
 };
