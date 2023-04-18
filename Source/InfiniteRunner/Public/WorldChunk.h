@@ -28,8 +28,6 @@ public:
 	//Functions
 	AWorldChunk();
 
-	virtual ~AWorldChunk() override;
-
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
@@ -37,6 +35,8 @@ public:
 	float GetChunkEnd() const;
 	
 	void IncreaseGameSpeed();
+
+	void DestroyObstacles();
 	
 protected:
 	
@@ -55,6 +55,8 @@ private:
 	class USceneComponent* ObstacleTransformParent;
 
 	static const FVector SpawnPoints[];
+
+	void FillSpawnPointsArray();
 
 	TArray<AActor*> SpawnedObstacles;
 };

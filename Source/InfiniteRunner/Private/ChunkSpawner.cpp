@@ -21,7 +21,7 @@ void AChunkSpawner::BeginPlay()
 
 	for(int i = 1; i < 4; i++)
 	{
-		FVector NewLocation = FVector(SpawnLocation.X - 1750.f * i, SpawnLocation.Y, SpawnLocation.Z);
+		FVector NewLocation = FVector(SpawnLocation.X - 2000.f * i, SpawnLocation.Y, SpawnLocation.Z);
 		SpawnedChunks.Add(GetWorld()->SpawnActor<AWorldChunk>(WorldChunk, NewLocation, FRotator::ZeroRotator));
 	}
 }
@@ -31,7 +31,7 @@ void AChunkSpawner::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// Iterate through the spawned road chunks
-	for (int32 i = SpawnedChunks.Num() - 1; i >= 0; i--)
+	for (int i = SpawnedChunks.Num() - 1; i >= 0; i--)
 	{
 		AWorldChunk* Chunk = SpawnedChunks[i];
 
@@ -40,6 +40,7 @@ void AChunkSpawner::Tick(float DeltaTime)
 		if (FVector::DotProduct(PlayerCharacter->GetActorForwardVector(), Chunk->GetActorLocation() - PlayerCharacter->GetActorLocation()) < 0 && Distance > MaxChunkBehindDistance)
 		{
 			// If the chunk is too far away, remove it from the game and the array
+			Chunk->DestroyObstacles();
 			Chunk->Destroy();
 			SpawnedChunks.RemoveAt(i);
 		}
@@ -54,6 +55,7 @@ void AChunkSpawner::Tick(float DeltaTime)
 			FVector SpawnLocation = FVector(LastChunk->GetChunkEnd(), 0.f, 0.f);
 			AWorldChunk* NewChunk = GetWorld()->SpawnActor<AWorldChunk>(WorldChunk, SpawnLocation, FRotator::ZeroRotator);
 			SpawnedChunks.Add(NewChunk);
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, NewChunk->GetActorLocation().ToString());
 		}
 	}
 }

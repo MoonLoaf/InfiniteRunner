@@ -6,12 +6,12 @@
 
 
 const FVector AWorldChunk::SpawnPoints[] = {
-	FVector(170.f, -170.f, 70.f),
-	FVector(170.f, 0.f, 70.f),
-	FVector(170.f, 170.f, 70.f),
-	FVector(300.f, -170.f, 70.f),
-	FVector(300.f, 0.f, 70.f),
-	FVector(300.f, 170.f, 70.f)
+	FVector(350.f, -170.f, 60.f),
+	FVector(350.f, 0.f, 60.f),
+	FVector(350.f, 170.f, 60.f),
+	FVector(-350.f, -170.f, 60.f),
+	FVector(-350.f, 0.f, 60.f),
+	FVector(-350.f, 170.f, 60.f)
 };
 
 AWorldChunk::AWorldChunk()
@@ -44,30 +44,18 @@ AWorldChunk::AWorldChunk()
 		FString SpawnComponentName = FString::Printf(TEXT("ObstacleSpawnPoint_%d"), i);
 
 		USceneComponent* SpawnComponent = CreateDefaultSubobject<USceneComponent>(*SpawnComponentName);
-		SpawnComponent->SetRelativeLocation(SpawnPoints[i]);
+		FVector ComponentPos = GetActorLocation() += SpawnPoints[i];
+		SpawnComponent->SetRelativeLocation(ComponentPos);
 		SpawnComponent->AttachToComponent(ObstacleTransformParent, FAttachmentTransformRules::KeepRelativeTransform);
 	}
 	
 }
-
-AWorldChunk::~AWorldChunk()
-{
-	for (AActor* SpawnedObstacle : SpawnedObstacles)
-	{
-		if (SpawnedObstacle != nullptr)
-		{
-			SpawnedObstacle->Destroy();
-		}
-	}
-}
-
 
 void AWorldChunk::BeginPlay()
 {
 	Super::BeginPlay();
 
 	GenerateObstacles();
-
 }
 
 void AWorldChunk::Tick(float DeltaTime)
@@ -104,7 +92,7 @@ void AWorldChunk::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor*
 
 float AWorldChunk::GetChunkEnd() const
 {
-	return GetActorLocation().X + 1750.f; //Very hardcoded
+	return GetActorLocation().X + 2000.f; //Very hardcoded, representing chunk size though
 }
 
 void AWorldChunk::GenerateObstacles()
@@ -140,6 +128,20 @@ void AWorldChunk::IncreaseGameSpeed()
 		//TODO Rewrite this
 		MyGameMode->GameSpeed = (MyGameMode->GameSpeed + 5.f);
 	}	
+}
+
+void AWorldChunk::DestroyObstacles()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Emerald, "Chunk destroyed" + SpawnedObstacles.Num());
+	while (SpawnedObstacles.Num() > 0)
+	{
+		AActor* SpawnedObstacle = SpawnedObstacles[0];
+		if (SpawnedObstacle != nullptr)
+		{
+			SpawnedObstacle->Destroy();
+		}
+		SpawnedObstacles.RemoveAt(0);
+	}
 }
 
 
