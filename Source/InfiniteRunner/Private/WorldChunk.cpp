@@ -32,12 +32,6 @@ AWorldChunk::AWorldChunk()
 	
 	ChunkGenerationBox->OnComponentBeginOverlap.AddDynamic(this, &AWorldChunk::OnOverlapBegin);
 	ChunkGenerationBox->OnComponentEndOverlap.AddDynamic(this, &AWorldChunk::OnOverlapEnd);
-
-	//ObstacleSpawnPoints
-
-	ObstacleTransformParent = CreateDefaultSubobject<USceneComponent>(TEXT("Obstacle Transform Parent"));
-	ObstacleTransformParent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-		
 }
 
 void AWorldChunk::BeginPlay()
@@ -94,21 +88,11 @@ void AWorldChunk::GenerateObstacles()
 		{
 			int ObstacleIndex = FMath::RandRange(0, ObstacleClasses.Num() - 1);
 
-			AActor* SpawnedObstacle = GetWorld()->SpawnActor<AActor>(ObstacleClasses[ObstacleIndex], ObstacleTransformParent->GetComponentTransform().TransformPosition(SpawnPoints[i]), FRotator::ZeroRotator);
+			AActor* SpawnedObstacle = GetWorld()->SpawnActor<AActor>(ObstacleClasses[ObstacleIndex], SpawnPoints[i], FRotator::ZeroRotator);
 			SpawnedObstacles.Add(SpawnedObstacle);
-			
-			
-			if (SpawnedObstacle)
-			{
-				USceneComponent* SpawnComponent = ObstacleTransformParent->GetChildComponent(i);
-				if (SpawnComponent)
-				{
-					SpawnedObstacle->AttachToComponent(SpawnComponent, FAttachmentTransformRules::KeepRelativeTransform);
-				}
-			}
+			SpawnedObstacle->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 		}
 	}
-
 }
 
 void AWorldChunk::IncreaseGameSpeed()

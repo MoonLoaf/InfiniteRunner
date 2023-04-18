@@ -52,11 +52,7 @@ private:
 
 	void GenerateObstacles();
 
-	class USceneComponent* ObstacleTransformParent;
-
 	static const FVector SpawnPoints[];
-
-	void FillSpawnPointsArray();
 
 	TArray<AActor*> SpawnedObstacles;
 };
