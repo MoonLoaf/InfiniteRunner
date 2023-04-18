@@ -6,7 +6,7 @@
 AChunkSpawner::AChunkSpawner()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	bAllowTickBeforeBeginPlay = false;
 }
 
 void AChunkSpawner::BeginPlay()

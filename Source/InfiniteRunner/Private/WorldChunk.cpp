@@ -37,18 +37,7 @@ AWorldChunk::AWorldChunk()
 
 	ObstacleTransformParent = CreateDefaultSubobject<USceneComponent>(TEXT("Obstacle Transform Parent"));
 	ObstacleTransformParent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-	
-
-	for (int i = 1; i < 7; i++)
-	{
-		FString SpawnComponentName = FString::Printf(TEXT("ObstacleSpawnPoint_%d"), i);
-
-		USceneComponent* SpawnComponent = CreateDefaultSubobject<USceneComponent>(*SpawnComponentName);
-		FVector ComponentPos = GetActorLocation() += SpawnPoints[i];
-		SpawnComponent->SetRelativeLocation(ComponentPos);
-		SpawnComponent->AttachToComponent(ObstacleTransformParent, FAttachmentTransformRules::KeepRelativeTransform);
-	}
-	
+		
 }
 
 void AWorldChunk::BeginPlay()
@@ -107,6 +96,7 @@ void AWorldChunk::GenerateObstacles()
 
 			AActor* SpawnedObstacle = GetWorld()->SpawnActor<AActor>(ObstacleClasses[ObstacleIndex], ObstacleTransformParent->GetComponentTransform().TransformPosition(SpawnPoints[i]), FRotator::ZeroRotator);
 			SpawnedObstacles.Add(SpawnedObstacle);
+			
 			
 			if (SpawnedObstacle)
 			{
