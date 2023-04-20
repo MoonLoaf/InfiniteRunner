@@ -11,7 +11,6 @@ class INFINITERUNNER_API AMyCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AMyCharacter();
 	
 	//Components	
@@ -34,8 +33,9 @@ public:
 	UPROPERTY(EditAnywhere, Category="Movement")
 	float LaneSwitchSpeed = 1.f;
 
+
 protected:
-	// Called when the game starts or when spawned
+	
 	virtual void BeginPlay() override;
 
 	//Components
@@ -60,8 +60,19 @@ private:
 
 	void SwitchLane(const FInputActionInstance& Instance);
 
-	void Jump();
+	virtual void Jump() override;
 
+	virtual void Landed(const FHitResult& Hit) override;
+
+	float JumpVelocity = 800.f;
+	
+	bool bIsJumping;
+
+	FVector InitialLocation;
+
+	UPROPERTY(EditAnywhere, Category="Jumping")
+	float Gravity = -200;
+	
 	void OnMovementComplete();
 	
 	void OnMoveUpdate(FVector TargetLocation);

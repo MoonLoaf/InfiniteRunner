@@ -37,6 +37,8 @@ public:
 	void IncreaseGameSpeed();
 
 	void DestroyObstacles();
+
+	void GenerateObstacles();
 	
 protected:
 	
@@ -50,7 +52,6 @@ protected:
 	
 private:	
 
-	void GenerateObstacles();
 
 	static const FVector SpawnPoints[];
 

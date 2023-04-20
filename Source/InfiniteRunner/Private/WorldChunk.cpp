@@ -6,12 +6,12 @@
 
 
 const FVector AWorldChunk::SpawnPoints[] = {
-	FVector(350.f, -170.f, 60.f),
-	FVector(350.f, 0.f, 60.f),
-	FVector(350.f, 170.f, 60.f),
-	FVector(-350.f, -170.f, 60.f),
-	FVector(-350.f, 0.f, 60.f),
-	FVector(-350.f, 170.f, 60.f)
+	FVector(350.f, -170.f, 30.f),
+	FVector(350.f, 0.f, 30.f),
+	FVector(350.f, 170.f, 30.f),
+	FVector(-350.f, -170.f, 30.f),
+	FVector(-350.f, 0.f, 30.f),
+	FVector(-350.f, 170.f, 30.f)
 };
 
 AWorldChunk::AWorldChunk()
@@ -38,7 +38,6 @@ void AWorldChunk::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GenerateObstacles();
 }
 
 void AWorldChunk::Tick(float DeltaTime)
@@ -84,7 +83,7 @@ void AWorldChunk::GenerateObstacles()
 	for(int i = 0; i < UE_ARRAY_COUNT(SpawnPoints); i++)
 	{
 		bool ShouldSpawn = FMath::RandBool();
-		if (ShouldSpawn)
+		if (ShouldSpawn && ObstacleClasses.Num() != 0)
 		{
 			int ObstacleIndex = FMath::RandRange(0, ObstacleClasses.Num() - 1);
 

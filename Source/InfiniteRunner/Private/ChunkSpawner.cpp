@@ -22,7 +22,7 @@ void AChunkSpawner::BeginPlay()
 	for(int i = 1; i < 4; i++)
 	{
 		FVector NewLocation = FVector(SpawnLocation.X - 2000.f * i, SpawnLocation.Y, SpawnLocation.Z);
-		SpawnedChunks.Add(GetWorld()->SpawnActor<AWorldChunk>(WorldChunk, NewLocation, FRotator::ZeroRotator));
+		SpawnedChunks.Add( GetWorld()->SpawnActor<AWorldChunk>(WorldChunk, NewLocation, FRotator::ZeroRotator));
 	}
 }
 
@@ -55,6 +55,7 @@ void AChunkSpawner::Tick(float DeltaTime)
 			FVector SpawnLocation = FVector(LastChunk->GetChunkEnd(), 0.f, 0.f);
 			AWorldChunk* NewChunk = GetWorld()->SpawnActor<AWorldChunk>(WorldChunk, SpawnLocation, FRotator::ZeroRotator);
 			SpawnedChunks.Add(NewChunk);
+			NewChunk->GenerateObstacles();
 			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, NewChunk->GetActorLocation().ToString());
 		}
 	}

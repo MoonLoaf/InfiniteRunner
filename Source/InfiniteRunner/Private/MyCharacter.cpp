@@ -5,7 +5,6 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
-// Sets default values
 AMyCharacter::AMyCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -32,7 +31,7 @@ AMyCharacter::AMyCharacter()
 	LanePositions.Add(0.f);
 }
 
-// Called when the game starts or when spawned
+
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -59,14 +58,35 @@ void AMyCharacter::BeginPlay()
 	else{UE_LOG(LogTemp,Warning,TEXT("No Input Component"))}
 
 	SetupLanes();
+	InitialLocation = GetActorLocation();
+	bIsJumping = false;
 }
 	
-
-// Called every frame
 void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bIsJumping)
+	{
+		FVector CurrentLocation = GetActorLocation();
+		FVector NewLocation = CurrentLocation + FVector(0.f, 0.f, JumpVelocity * DeltaTime);
+		SetActorLocation(NewLocation);
+    
+		JumpVelocity -= 2000.f * DeltaTime;
+    
+		if (JumpVelocity < 0.f && FMath::Abs(GetActorLocation().Z - InitialLocation.Z) <= 1.f)
+		{
+			bIsJumping = false;
+			JumpVelocity = 0.f;
+			SetActorLocation(InitialLocation);
+      
+			// // Play the landing animation
+			// if (LandingAnimation != nullptr)
+			// {
+			// 	PlayAnimMontage(LandingAnimation);
+			// }
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -106,7 +126,7 @@ void AMyCharacter::SetupLanes()
 
 void AMyCharacter::SwitchLane(const FInputActionInstance& Instance)
 {
-    if (bIsMoving){return;}
+    if (bIsMoving || bIsJumping){return;}
 
     bIsMoving = true;
 
@@ -151,6 +171,28 @@ void AMyCharacter::OnMovementComplete()
 
 void AMyCharacter::Jump()
 {
-	//Jump logic	
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, "Space pressed");
+	
+	if(bIsJumping||bIsMoving){return;}
+	
+	//Super::Jump();
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, "Jump successfully called");
+	InitialLocation = GetActorLocation();
+	JumpVelocity = 800.f;
+	bIsJumping = true;
 }
 
+void AMyCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, "Landed");
+  
+	bIsJumping = false;
+	JumpVelocity = 0.f;
+  
+	//TODO Play the landing animation
+	// if (LandingAnimation != nullptr)
+	// {
+	// 	PlayAnimMontage(LandingAnimation);
+	// }
+}
