@@ -154,7 +154,7 @@ void AMyCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 			//TODO GameOver
 		}
 
-		GetWorldTimerManager().SetTimer(IFrameTimerHandle, this, &AMyCharacter::ResetIframe, IFrameTime, true);
+		GetWorldTimerManager().SetTimer(IFrameTimerHandle, this, &AMyCharacter::ResetIframe, IFrameTime, false);
 	}
 }
 

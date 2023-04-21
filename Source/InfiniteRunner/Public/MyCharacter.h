@@ -88,9 +88,6 @@ private:
 	bool bIsJumping;
 
 	FVector InitialLocation;
-
-	UPROPERTY(EditAnywhere, Category="Jumping")
-	float Gravity = -200;
 	
 	void OnMovementComplete();
 	
