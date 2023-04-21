@@ -13,13 +13,8 @@ public:
 	
 	AObstacleBase();
 
-	
-	//virtual void Tick(float DeltaTime) override;
-
 protected:
 	
-	virtual void BeginPlay() override;
-
 	UPROPERTY(EditAnywhere, Category= "Collision")
 	UStaticMeshComponent* BaseMesh;
 

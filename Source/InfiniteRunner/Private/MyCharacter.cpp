@@ -1,4 +1,6 @@
 #include "InfiniteRunner/Public/MyCharacter.h"
+
+#include "DamageObstacle.h"
 #include "EnhancedInputComponent.h"
 #include "MyUIclass.h"
 #include "Blueprint/UserWidget.h"
@@ -78,8 +80,11 @@ void AMyCharacter::BeginPlay()
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AMyCharacter::OnCapsuleHit);
 	
 	SetupLanes();
+	GetWorldTimerManager().SetTimer(ScoreModifierTimerHandle, this, &AMyCharacter::IncrementScoreModifier, 5.f, true);
 	InitialLocation = GetActorLocation();
 	bIsJumping = false;
+	bIsMoving = false;
+	bCanBeDamaged = true;
 }
 
 void AMyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -96,7 +101,7 @@ void AMyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	Score += FMath::FloorToInt(DeltaTime * ScoreModifier);
+	Score += DeltaTime * ScoreModifier;
 	MyHud->UpdateScoreText();
 }
 
@@ -137,6 +142,30 @@ void AMyCharacter::SetupLanes()
 void AMyCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, "Collided");
+	if(bCanBeDamaged && OtherActor->IsA<ADamageObstacle>())
+	{
+		//TODO OtherComp->SetSimulatePhysics(true);
+		bCanBeDamaged = false;
+		HealthAmount--;
+		MyHud->UpdateHealthText();
+
+		if(HealthAmount <= 0)
+		{
+			//TODO GameOver
+		}
+
+		GetWorldTimerManager().SetTimer(IFrameTimerHandle, this, &AMyCharacter::ResetIframe, IFrameTime, true);
+	}
+}
+
+void AMyCharacter::ResetIframe()
+{
+	bCanBeDamaged = true;
+}
+
+void AMyCharacter::IncrementScoreModifier()
+{
+	ScoreModifier++;
 }
 
 void AMyCharacter::SwitchLane(const FInputActionInstance& Instance)

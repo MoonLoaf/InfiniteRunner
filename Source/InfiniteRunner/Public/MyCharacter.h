@@ -38,9 +38,9 @@ public:
 
 	int HealthAmount = 3;
 
-	int Score = 0;
+	float Score = 0.f;
 
-	float ScoreModifier = 1.f;
+	float ScoreModifier = 10.f;
 
 protected:
 	
@@ -68,6 +68,14 @@ private:
 	
 	FTimerHandle MovementUpdateHandle;
 
+	FTimerHandle IFrameTimerHandle;
+	
+	FTimerHandle ScoreModifierTimerHandle;
+
+	void ResetIframe();
+	
+	void IncrementScoreModifier();
+
 	void SwitchLane(const FInputActionInstance& Instance);
 
 	virtual void Jump() override;
@@ -94,6 +102,13 @@ private:
 	int LaneIndex;
 
 	bool bIsMoving;
+
+	bool bCanBeDamaged;
+
+	UPROPERTY(EditAnywhere, Category = "Damage")
+	float IFrameTime = 1.5f;
+
+	
 
 	//HUD
 	UPROPERTY(EditAnywhere, Category="HUD")

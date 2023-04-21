@@ -16,8 +16,8 @@ public:
 	UPROPERTY(EditAnywhere, Category="Mesh")
 	UStaticMeshComponent* BaseMesh;
 
-	UPROPERTY(EditAnywhere, Category="Loading")
-	class UBoxComponent* ChunkGenerationBox;
+	// UPROPERTY(EditAnywhere, Category="Loading")
+	// class UBoxComponent* ChunkGenerationBox;
 
 	UPROPERTY(EditAnywhere, Category = "Obstacles")
 	TArray<TSubclassOf<AActor>> ObstacleClasses;
@@ -27,10 +27,6 @@ public:
 	
 	//Functions
 	AWorldChunk();
-
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
 
 	float GetChunkEnd() const;
 	

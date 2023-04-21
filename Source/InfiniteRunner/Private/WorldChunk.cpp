@@ -1,9 +1,5 @@
 #include "WorldChunk.h"
-
-#include "MyCharacter.h"
-#include "Components/BoxComponent.h"
 #include "MyRunnerGameMode.h"
-
 
 const FVector AWorldChunk::SpawnPoints[] = {
 	FVector(350.f, -170.f, 30.f),
@@ -23,21 +19,17 @@ AWorldChunk::AWorldChunk()
 	RootComponent = BaseMesh;
 	BaseMesh->SetGenerateOverlapEvents(true);
 
-	ChunkGenerationBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Trigger Box"));
-	ChunkGenerationBox->SetBoxExtent(FVector(512.f,32.f,256.f));
-	ChunkGenerationBox->SetCollisionProfileName("Trigger");
-	ChunkGenerationBox->SetBoxExtent(FVector(10.f,520.f,100.f));
-	ChunkGenerationBox->SetRelativeLocation(FVector(100.f ,-950.f, 0.f));
-	ChunkGenerationBox->SetupAttachment(RootComponent);
-	
-	ChunkGenerationBox->OnComponentBeginOverlap.AddDynamic(this, &AWorldChunk::OnOverlapBegin);
-	ChunkGenerationBox->OnComponentEndOverlap.AddDynamic(this, &AWorldChunk::OnOverlapEnd);
+	// ChunkGenerationBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Trigger Box"));
+	// ChunkGenerationBox->SetBoxExtent(FVector(512.f,32.f,256.f));
+	// ChunkGenerationBox->SetCollisionProfileName("Trigger");
+	// ChunkGenerationBox->SetBoxExtent(FVector(10.f,520.f,100.f));
+	// ChunkGenerationBox->SetRelativeLocation(FVector(100.f ,-950.f, 0.f));
+	// ChunkGenerationBox->SetupAttachment(RootComponent);
 }
 
 void AWorldChunk::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
 void AWorldChunk::Tick(float DeltaTime)
@@ -59,19 +51,6 @@ void AWorldChunk::PostInitializeComponents()
 	MyGameMode = Cast<AMyRunnerGameMode>(GetWorld()->GetAuthGameMode());
 }
 
-void AWorldChunk::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, "Overlap begin, chunk");
-}
-
-void AWorldChunk::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex)
-{
-	if(OtherActor->IsA(AMyCharacter::StaticClass()))
-	{
-		IncreaseGameSpeed();
-	}
-}
-
 float AWorldChunk::GetChunkEnd() const
 {
 	return GetActorLocation().X + 2000.f; //Very hardcoded, representing chunk size though
@@ -87,7 +66,7 @@ void AWorldChunk::GenerateObstacles()
 		{
 			int ObstacleIndex = FMath::RandRange(0, ObstacleClasses.Num() - 1);
 
-			AActor* SpawnedObstacle = GetWorld()->SpawnActor<AActor>(ObstacleClasses[ObstacleIndex], SpawnPoints[i], FRotator::ZeroRotator);
+			AActor* SpawnedObstacle = GetWorld()->SpawnActor<AActor>(ObstacleClasses[ObstacleIndex], SpawnPoints[i], (FRotator(0.f, 180.f, 0.f)));
 			SpawnedObstacles.Add(SpawnedObstacle);
 			SpawnedObstacle->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 		}

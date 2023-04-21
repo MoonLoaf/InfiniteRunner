@@ -13,7 +13,8 @@ void UMyUIclass::UpdateScoreText()
 	ScoreText = Cast<UTextBlock>(GetWidgetFromName(TEXT("ScoreText")));
 	if (ScoreText)
 	{
-		ScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), MyCharacter->Score)));
+		int32 ScoreInt = static_cast<int32>(MyCharacter->Score);
+		ScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), ScoreInt)));
 	}
 
 }
