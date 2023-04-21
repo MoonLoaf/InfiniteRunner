@@ -30,13 +30,23 @@ public:
 
 	void SetupLanes();
 
+	UFUNCTION()
+	void OnCapsuleHit(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
 	UPROPERTY(EditAnywhere, Category="Movement")
 	float LaneSwitchSpeed = 1.f;
 
+	int HealthAmount = 3;
+
+	int Score = 0;
+
+	float ScoreModifier = 1.f;
 
 protected:
 	
 	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	//Components
 	UPROPERTY(EditAnywhere, Category="Camera")
@@ -62,8 +72,9 @@ private:
 
 	virtual void Jump() override;
 
-	virtual void Landed(const FHitResult& Hit) override;
+	virtual void Landed(const FHitResult & Hit) override; 
 
+	UPROPERTY(EditAnywhere, Category="Jumping")
 	float JumpVelocity = 800.f;
 	
 	bool bIsJumping;
@@ -83,4 +94,11 @@ private:
 	int LaneIndex;
 
 	bool bIsMoving;
+
+	//HUD
+	UPROPERTY(EditAnywhere, Category="HUD")
+	TSubclassOf<class UMyUIclass> MyHudClass;
+
+	UPROPERTY()
+	class UMyUIclass* MyHud;
 };

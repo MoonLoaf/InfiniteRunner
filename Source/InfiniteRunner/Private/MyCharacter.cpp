@@ -1,8 +1,10 @@
 #include "InfiniteRunner/Public/MyCharacter.h"
-
 #include "EnhancedInputComponent.h"
+#include "MyUIclass.h"
+#include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 AMyCharacter::AMyCharacter()
@@ -29,6 +31,10 @@ AMyCharacter::AMyCharacter()
 	LanePositions.Add(0.f);
 	LanePositions.Add(0.f);
 	LanePositions.Add(0.f);
+
+	//HUD
+	MyHudClass = nullptr;
+	MyHud = nullptr;
 }
 
 
@@ -57,36 +63,41 @@ void AMyCharacter::BeginPlay()
 	}
 	else{UE_LOG(LogTemp,Warning,TEXT("No Input Component"))}
 
+	if(IsLocallyControlled() && MyHudClass)
+	{
+		APlayerController* MyController = GetController<APlayerController>();
+		check(MyController);
+		MyHud = CreateWidget<UMyUIclass>(MyController, MyHudClass);
+		check(MyHud);
+		MyHud->AddToPlayerScreen();
+
+		MyHud->UpdateHealthText();
+		MyHud->UpdateScoreText();
+	}
+
+	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AMyCharacter::OnCapsuleHit);
+	
 	SetupLanes();
 	InitialLocation = GetActorLocation();
 	bIsJumping = false;
 }
-	
+
+void AMyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if(MyHud)
+	{
+		MyHud->RemoveFromParent();
+		MyHud = nullptr;
+	}
+}
+
 void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (bIsJumping)
-	{
-		FVector CurrentLocation = GetActorLocation();
-		FVector NewLocation = CurrentLocation + FVector(0.f, 0.f, JumpVelocity * DeltaTime);
-		SetActorLocation(NewLocation);
-    
-		JumpVelocity -= 2000.f * DeltaTime;
-    
-		if (JumpVelocity < 0.f && FMath::Abs(GetActorLocation().Z - InitialLocation.Z) <= 1.f)
-		{
-			bIsJumping = false;
-			JumpVelocity = 0.f;
-			SetActorLocation(InitialLocation);
-      
-			// // Play the landing animation
-			// if (LandingAnimation != nullptr)
-			// {
-			// 	PlayAnimMontage(LandingAnimation);
-			// }
-		}
-	}
+	Score += FMath::FloorToInt(DeltaTime * ScoreModifier);
+	MyHud->UpdateScoreText();
 }
 
 // Called to bind functionality to input
@@ -123,6 +134,10 @@ void AMyCharacter::SetupLanes()
 	LaneIndex = 1;
 }
 
+void AMyCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, "Collided");
+}
 
 void AMyCharacter::SwitchLane(const FInputActionInstance& Instance)
 {
@@ -171,15 +186,13 @@ void AMyCharacter::OnMovementComplete()
 
 void AMyCharacter::Jump()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, "Space pressed");
-	
-	if(bIsJumping||bIsMoving){return;}
-	
-	//Super::Jump();
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, "Jump successfully called");
-	InitialLocation = GetActorLocation();
-	JumpVelocity = 800.f;
+	if(bIsJumping || bIsMoving){return;}
 	bIsJumping = true;
+	Super::Jump();
+
+	FVector JumpVector = FVector(0.f, 0.f, JumpVelocity);
+	LaunchCharacter(JumpVector, false, true);
+
 }
 
 void AMyCharacter::Landed(const FHitResult& Hit)
@@ -188,7 +201,6 @@ void AMyCharacter::Landed(const FHitResult& Hit)
 	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, "Landed");
   
 	bIsJumping = false;
-	JumpVelocity = 0.f;
   
 	//TODO Play the landing animation
 	// if (LandingAnimation != nullptr)

@@ -14,6 +14,8 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	virtual void BeginPlay() override;
+
 	UPROPERTY(EditAnywhere, Category="Game Speed")
 	float GameSpeed = 5;
 
