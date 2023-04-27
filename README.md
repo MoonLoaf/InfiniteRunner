@@ -12,3 +12,13 @@ My player is static on the X axis, and has access to an array of floats that rep
 I have also setup two different classes for the obstacles, since one of the types of obstacles is not supposed to deal damage on collision. In the characters's onCapsuleHit im checking whether the other actor is a damaging obstacle to determine this.
 
 I've also set up a super simple UI using the UUserWidget class and a widget blueprint.
+
+
+Part 2 Update
+
+Bugs fixed:
+Since multiplayer was added I decoupled the chunkspawner from any reference to my player
+[File in Commit](https://github.com/MoonLoaf/InfiniteRunner/commit/cfe727edc8354fd4d14aadaef3d26ace55060e7c#diff-5daa2f216710b0b30ac0439e30c18e78bad3fc13f97a34915b392ea668cd849f)
+
+Fixed bug where playercharacter never got to run OnMoveComplete() resulting in the players position being locked.
+[File in Commit](https://github.com/MoonLoaf/InfiniteRunner/commit/cfe727edc8354fd4d14aadaef3d26ace55060e7c#diff-fc58bd985b663937e3a7af901b8e6820cf4ea1973c398b4caa2254d576afb58a)
