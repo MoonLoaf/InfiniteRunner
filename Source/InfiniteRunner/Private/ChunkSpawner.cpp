@@ -1,5 +1,4 @@
 #include "ChunkSpawner.h"
-#include "MyCharacter.h"
 #include "WorldChunk.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -31,8 +30,8 @@ void AChunkSpawner::Tick(float DeltaTime)
 		AWorldChunk* Chunk = SpawnedChunks[i];
 
 		// Check the distance between the chunk and the player
-		float Distance = FVector::Distance(Chunk->GetActorLocation(), PlayerCharacter->GetActorLocation());
-		if (FVector::DotProduct(PlayerCharacter->GetActorForwardVector(), Chunk->GetActorLocation() - PlayerCharacter->GetActorLocation()) < 0 && Distance > MaxChunkBehindDistance)
+		float Distance = FVector::Distance(Chunk->GetActorLocation(), GetActorLocation());
+		if (FVector::DotProduct(GetActorForwardVector(), Chunk->GetActorLocation() - GetActorLocation()) < 0 && Distance > MaxChunkBehindDistance)
 		{
 			// If the chunk is too far away, remove it from the game and the array
 			Chunk->DestroyObstacles();
@@ -45,7 +44,7 @@ void AChunkSpawner::Tick(float DeltaTime)
 	if (SpawnedChunks.Num() > 0)
 	{
 		AWorldChunk* LastChunk = SpawnedChunks.Last();
-		if (LastChunk->GetChunkEnd() < PlayerCharacter->GetActorLocation().X + GenerationDistance)
+		if (LastChunk->GetChunkEnd() < GetActorLocation().X + GenerationDistance)
 		{
 			FVector SpawnLocation = FVector(LastChunk->GetChunkEnd(), 0.f, 0.f);
 			AWorldChunk* NewChunk = GetWorld()->SpawnActor<AWorldChunk>(GetRandomWorldChunkClass(), SpawnLocation, FRotator::ZeroRotator);

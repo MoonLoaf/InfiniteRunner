@@ -12,6 +12,9 @@ class INFINITERUNNER_API AMyCharacter : public ACharacter
 
 public:
 	AMyCharacter();
+
+	UPROPERTY(EditAnywhere, Category="Debug")
+	bool bHudEnabled;
 	
 	//Components	
 	UPROPERTY(EditAnywhere, Category="Camera")
@@ -63,6 +66,8 @@ protected:
 	UInputAction* IA_Jump;
 	
 private:
+
+	virtual void PossessedBy(AController* NewController) override;
 
 	FTimerHandle MovementTimerHandle;
 	

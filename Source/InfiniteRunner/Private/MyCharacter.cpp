@@ -5,27 +5,27 @@
 #include "MyUIclass.h"
 #include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
-#include "Camera/CameraComponent.h"
+//#include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "GameFramework/SpringArmComponent.h"
+//#include "GameFramework/SpringArmComponent.h"
 
 AMyCharacter::AMyCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//SpringArm Setup
-	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
-	SpringArm->SetupAttachment(RootComponent);
-	SpringArm->TargetArmLength = 500.f;
-	SpringArm->TargetOffset.Z = 100.f;
-	SpringArm->bEnableCameraLag = true;
-	SpringArm->CameraLagSpeed = 5.f;
-
-	//Camera Setup
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-	Camera->FieldOfView = 90.f;
+	// //SpringArm Setup
+	// SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
+	// SpringArm->SetupAttachment(RootComponent);
+	// SpringArm->TargetArmLength = 500.f;
+	// SpringArm->TargetOffset.Z = 100.f;
+	// SpringArm->bEnableCameraLag = true;
+	// SpringArm->CameraLagSpeed = 5.f;
+	//
+	// //Camera Setup
+	// Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	// Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+	// Camera->FieldOfView = 90.f;
 	//Camera->SetRelativeLocation(FVector(-1100.f, 0.f, 350.f));
 	//Camera->SetRelativeRotation(FQuat(0.f, -20.f, 0.f, 0.f));
 
@@ -44,39 +44,6 @@ void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//Setup PlayerController, Subsytem and input mapping
-	if(const APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	{
-		UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
-
-		if(Subsystem)
-		{
-			Subsystem->AddMappingContext(InputMapping, 0);
-			UE_LOG(LogTemp,Warning,TEXT("Setup Map Succesfully"))
-		}
-		else{UE_LOG(LogTemp,Warning,TEXT("No Subsystem"))}
-	}
-	else{UE_LOG(LogTemp,Warning,TEXT("No Valid Player Controller"))}
-	
-	MyInputComponent = CreatePlayerInputComponent();
-	if(MyInputComponent)
-	{
-		SetupPlayerInputComponent(MyInputComponent);
-	}
-	else{UE_LOG(LogTemp,Warning,TEXT("No Input Component"))}
-
-	if(IsLocallyControlled() && MyHudClass)
-	{
-		APlayerController* MyController = GetController<APlayerController>();
-		check(MyController);
-		MyHud = CreateWidget<UMyUIclass>(MyController, MyHudClass);
-		check(MyHud);
-		MyHud->AddToPlayerScreen();
-
-		MyHud->UpdateHealthText();
-		MyHud->UpdateScoreText();
-	}
-
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AMyCharacter::OnCapsuleHit);
 	
 	SetupLanes();
@@ -85,6 +52,12 @@ void AMyCharacter::BeginPlay()
 	bIsJumping = false;
 	bIsMoving = false;
 	bCanBeDamaged = true;
+
+	if(MyHud)
+	{
+		MyHud->UpdateHealthText();
+		MyHud->UpdateScoreText();
+	}
 }
 
 void AMyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -98,20 +71,52 @@ void AMyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
+void AMyCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	
+	MyInputComponent = CreatePlayerInputComponent();
+	if(MyInputComponent)
+	{
+		SetupPlayerInputComponent(MyInputComponent);
+	}
+
+	if(MyHudClass && bHudEnabled)
+	{
+		APlayerController* MyPlayerController = GetController<APlayerController>();
+		MyHud = CreateWidget<UMyUIclass>(MyPlayerController, MyHudClass);
+		check(MyHud);
+		MyHud->AddToViewport();
+	}
+}
+
 void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	Score += DeltaTime * ScoreModifier;
-	MyHud->UpdateScoreText();
+
+	if(bHudEnabled)
+	{
+		Score += DeltaTime * ScoreModifier;
+		MyHud->UpdateScoreText();
+	}
 }
 
-// Called to bind functionality to input
 void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	MyEnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 
+	//Setup PlayerController, Subsytem and input mapping
+	if(const APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+	{
+		UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
+
+		if(Subsystem)
+		{
+			Subsystem->AddMappingContext(InputMapping, 0);
+		}
+	}
 	if(MyEnhancedInputComponent)
 	{
 		//Add Bindings here >>
@@ -122,11 +127,6 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		
 		UE_LOG(LogTemp,Warning,TEXT("Setup Bindings Succesfully"));
 	}
-	else if(!MyEnhancedInputComponent)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("No valid EnhancedInputComponent"));
-	}
-	else{UE_LOG(LogTemp,Warning,TEXT("Error binding Input actions"));}
 }
 
 void AMyCharacter::SetupLanes()
@@ -147,8 +147,11 @@ void AMyCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 		//TODO OtherComp->SetSimulatePhysics(true);
 		bCanBeDamaged = false;
 		HealthAmount--;
-		MyHud->UpdateHealthText();
 
+		if(bHudEnabled)
+		{
+			MyHud->UpdateHealthText();
+		}
 		if(HealthAmount <= 0)
 		{
 			//TODO GameOver
@@ -200,7 +203,7 @@ void AMyCharacter::OnMoveUpdate(FVector TargetLocation)
     FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, GetWorld()->DeltaTimeSeconds, LaneSwitchSpeed);
     SetActorLocation(NewLocation);
 	
-    if (FVector::DistSquared(CurrentLocation, TargetLocation) < 0.01f)
+    if (FMath::Abs(CurrentLocation.Y - TargetLocation.Y) < 0.01f)
     {
         GetWorldTimerManager().ClearTimer(MovementUpdateHandle);
         OnMovementComplete(); 

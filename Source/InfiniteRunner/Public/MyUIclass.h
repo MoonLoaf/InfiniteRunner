@@ -4,8 +4,6 @@
 #include "Blueprint/UserWidget.h"
 #include "MyUIclass.generated.h"
 
-
-
 UCLASS()
 class INFINITERUNNER_API UMyUIclass : public UUserWidget
 {
@@ -26,6 +24,6 @@ public:
 	
 
 private:
-	
+
 	class AMyCharacter* MyCharacter;
 };
