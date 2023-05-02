@@ -22,3 +22,11 @@ Since multiplayer was added I decoupled the chunkspawner from any reference to m
 
 Fixed bug where playercharacter never got to run OnMoveComplete() resulting in the players position being locked.
 [File in Commit](https://github.com/MoonLoaf/InfiniteRunner/commit/cfe727edc8354fd4d14aadaef3d26ace55060e7c#diff-fc58bd985b663937e3a7af901b8e6820cf4ea1973c398b4caa2254d576afb58a)
+
+Added High score that reads and writes to/from Json between game sessions [File in Commit](https://github.com/MoonLoaf/InfiniteRunner/commit/1c6e5bb465ed6f8ed07df50104e24320c9da18c0#diff-1be5d583375af947f663de90b7c570ea7dd26fee1f8f7ff7524d00de3ed789b4)
+
+Added Multiplayer by creating another instance of playercontroller and player blueprint (with another input mapping)[File in Commit](https://github.com/MoonLoaf/InfiniteRunner/commit/1c6e5bb465ed6f8ed07df50104e24320c9da18c0#diff-0d3ff877872baaeef17a710953927f6e9372f0e06d0cc08fc7ddf5aa0a038134)
+
+I want to point out that the enhanced input system is currently broken for this sort of implementation of multiplayer in Unreal 5.1[Link to reported bug](https://issues.unrealengine.com/issue/UE-169979)
+
+I this bug first appeared to me quite late in my project and I want to emphasize that I have spent a lot of time trying to solve and degub this before realizing this is a known issue, which is why I have left most of my debugging in my code. The work around I have found for this is plugging in Keyboard+moouse and TWO separate gamepads, one of which will control player 2. Sometimes this works with just one gamepad.
