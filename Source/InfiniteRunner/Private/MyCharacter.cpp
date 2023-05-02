@@ -5,29 +5,12 @@
 #include "MyUIclass.h"
 #include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
-//#include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-//#include "GameFramework/SpringArmComponent.h"
 
 AMyCharacter::AMyCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	// //SpringArm Setup
-	// SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
-	// SpringArm->SetupAttachment(RootComponent);
-	// SpringArm->TargetArmLength = 500.f;
-	// SpringArm->TargetOffset.Z = 100.f;
-	// SpringArm->bEnableCameraLag = true;
-	// SpringArm->CameraLagSpeed = 5.f;
-	//
-	// //Camera Setup
-	// Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	// Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-	// Camera->FieldOfView = 90.f;
-	//Camera->SetRelativeLocation(FVector(-1100.f, 0.f, 350.f));
-	//Camera->SetRelativeRotation(FQuat(0.f, -20.f, 0.f, 0.f));
 
 	//Lane Array
 	LanePositions.Add(0.f);
@@ -55,8 +38,8 @@ void AMyCharacter::BeginPlay()
 
 	if(MyHud)
 	{
-		MyHud->UpdateHealthText();
-		MyHud->UpdateScoreText();
+		MyHud->UpdateHealthText(HealthAmount);
+		MyHud->UpdateScoreText(Score);
 	}
 }
 
@@ -75,12 +58,14 @@ void AMyCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	
+	UE_LOG(LogTemp, Warning, TEXT("Player possessed by %d"), Cast<APlayerController>(NewController)->GetLocalPlayer()->GetLocalPlayerIndex());
+	
 	MyInputComponent = CreatePlayerInputComponent();
 	if(MyInputComponent)
 	{
 		SetupPlayerInputComponent(MyInputComponent);
 	}
-
+	
 	if(MyHudClass && bHudEnabled)
 	{
 		APlayerController* MyPlayerController = GetController<APlayerController>();
@@ -94,10 +79,10 @@ void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if(bHudEnabled)
+	if(bHudEnabled && MyHud)
 	{
 		Score += DeltaTime * ScoreModifier;
-		MyHud->UpdateScoreText();
+		MyHud->UpdateScoreText(Score);
 	}
 }
 
@@ -106,7 +91,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	MyEnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
-
+	
 	//Setup PlayerController, Subsytem and input mapping
 	if(const APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
@@ -144,17 +129,22 @@ void AMyCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, "Collided");
 	if(bCanBeDamaged && OtherActor->IsA<ADamageObstacle>())
 	{
-		//TODO OtherComp->SetSimulatePhysics(true);
 		bCanBeDamaged = false;
 		HealthAmount--;
 
+		OtherComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 		if(bHudEnabled)
 		{
-			MyHud->UpdateHealthText();
+			MyHud->UpdateHealthText(HealthAmount);
 		}
 		if(HealthAmount <= 0)
 		{
-			//TODO GameOver
+			HealthAmount = 0;
+			SetActorHiddenInGame(true);
+			SetActorTickEnabled(false);
+
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 
 		GetWorldTimerManager().SetTimer(IFrameTimerHandle, this, &AMyCharacter::ResetIframe, IFrameTime, false);
@@ -188,12 +178,6 @@ void AMyCharacter::SwitchLane(const FInputActionInstance& Instance)
     FVector CurrentLocation = GetActorLocation();
     FVector TargetLocation = FVector(CurrentLocation.X, LanePositions[LaneIndex], CurrentLocation.Z);
 
-    // Calculate the time needed for the character to reach the target location
-    float DistanceToTarget = FVector::Dist(CurrentLocation, TargetLocation);
-    float MoveTime = DistanceToTarget / LaneSwitchSpeed;
-
-    // Use a timer to smoothly move the character to the target location
-    GetWorldTimerManager().SetTimer(MovementTimerHandle, this, &AMyCharacter::OnMovementComplete, MoveTime, false);
     GetWorldTimerManager().SetTimer(MovementUpdateHandle, FTimerDelegate::CreateUObject(this, &AMyCharacter::OnMoveUpdate, TargetLocation), 0.001, true);
 }
 
@@ -203,10 +187,12 @@ void AMyCharacter::OnMoveUpdate(FVector TargetLocation)
     FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, GetWorld()->DeltaTimeSeconds, LaneSwitchSpeed);
     SetActorLocation(NewLocation);
 	
-    if (FMath::Abs(CurrentLocation.Y - TargetLocation.Y) < 0.01f)
+    if (FMath::Abs(CurrentLocation.Y - TargetLocation.Y) < 1.f)
     {
         GetWorldTimerManager().ClearTimer(MovementUpdateHandle);
-        OnMovementComplete(); 
+        OnMovementComplete();
+    	SetActorLocation(TargetLocation);
+    	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, "Movement complete");
     }
 }
 
@@ -224,7 +210,6 @@ void AMyCharacter::Jump()
 
 	FVector JumpVector = FVector(0.f, 0.f, JumpVelocity);
 	LaunchCharacter(JumpVector, false, true);
-
 }
 
 void AMyCharacter::Landed(const FHitResult& Hit)
@@ -233,10 +218,4 @@ void AMyCharacter::Landed(const FHitResult& Hit)
 	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, "Landed");
   
 	bIsJumping = false;
-  
-	//TODO Play the landing animation
-	// if (LandingAnimation != nullptr)
-	// {
-	// 	PlayAnimMontage(LandingAnimation);
-	// }
 }

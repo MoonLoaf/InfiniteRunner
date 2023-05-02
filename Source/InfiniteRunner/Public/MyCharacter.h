@@ -51,13 +51,6 @@ protected:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	//Components
-	UPROPERTY(EditAnywhere, Category="Camera")
-	class UCameraComponent* Camera;
-
-	UPROPERTY(EditAnywhere, Category="Camera")
-	class USpringArmComponent* SpringArm;
-
 	//Input Actions
 	UPROPERTY(EditAnywhere, Category="Input Actions")
 	UInputAction* IA_SwitchLane;
@@ -69,8 +62,6 @@ private:
 
 	virtual void PossessedBy(AController* NewController) override;
 
-	FTimerHandle MovementTimerHandle;
-	
 	FTimerHandle MovementUpdateHandle;
 
 	FTimerHandle IFrameTimerHandle;

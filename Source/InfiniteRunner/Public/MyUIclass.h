@@ -12,18 +12,13 @@ class INFINITERUNNER_API UMyUIclass : public UUserWidget
 public:
 	
 	UFUNCTION(BlueprintCallable, Category = "UI")
-	void UpdateScoreText();
+	void UpdateScoreText(float Value);
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
-	void UpdateHealthText();
+	void UpdateHealthText(int Value);
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	class UTextBlock* ScoreText;
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	class UTextBlock* HealthText;
-	
-
-private:
-
-	class AMyCharacter* MyCharacter;
 };

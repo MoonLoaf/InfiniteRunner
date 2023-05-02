@@ -1,26 +1,23 @@
 #include "MyUIclass.h"
-#include "MyCharacter.h"
 #include "Components/TextBlock.h"
 
-void UMyUIclass::UpdateScoreText()
+void UMyUIclass::UpdateScoreText(float Value)
 {
-	MyCharacter = Cast<AMyCharacter>(GetOwningPlayerPawn());
 	ScoreText = Cast<UTextBlock>(GetWidgetFromName(TEXT("ScoreText")));
 
-	if (ScoreText && MyCharacter)
+	if (ScoreText)
 	{
-		int32 ScoreInt = static_cast<int32>(MyCharacter->Score);
+		int32 ScoreInt = static_cast<int32>(Value);
 		ScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), ScoreInt)));
 	}
 }
 
-void UMyUIclass::UpdateHealthText()
+void UMyUIclass::UpdateHealthText(int Value)
 {
-	MyCharacter = Cast<AMyCharacter>(GetOwningPlayerPawn());
 	HealthText = Cast<UTextBlock>(GetWidgetFromName(TEXT("HealthText")));
 
-	if (HealthText && MyCharacter)
+	if (HealthText)
 	{
-		HealthText->SetText(FText::FromString(FString::Printf(TEXT("Health: %d"), MyCharacter->HealthAmount)));
+		HealthText->SetText(FText::FromString(FString::Printf(TEXT("Health: %d"), Value)));
 	}
 }
