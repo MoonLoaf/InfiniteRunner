@@ -43,7 +43,6 @@ public:
 private:
 
 	//Character Instances
-
 	AMyCharacter* Player1;
 	AMyCharacter* Player2;
 

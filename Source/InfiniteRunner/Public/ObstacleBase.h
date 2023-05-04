@@ -17,7 +17,4 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category= "Collision")
 	UStaticMeshComponent* BaseMesh;
-
-private:
-	
 };

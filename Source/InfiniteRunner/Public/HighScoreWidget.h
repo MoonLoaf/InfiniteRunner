@@ -14,12 +14,15 @@ class INFINITERUNNER_API UHighScoreWidget : public UUserWidget
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	class UTextBlock* HighScoreText;
 
+	UPROPERTY()
+	TArray<float> TopScores;
+	
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
-	void DisplayHighScore();
+	void DisplayHighScores();
 
-	void SaveHighScore(float HighScore);
+	void SaveHighScores(const TArray<float>& HighScores);
 	
-	float LoadHighScore();
+	TArray<float> LoadHighScores();
 };

@@ -13,9 +13,6 @@ class INFINITERUNNER_API AMyCharacter : public ACharacter
 public:
 	AMyCharacter();
 
-	UPROPERTY(EditAnywhere, Category="Debug")
-	bool bHudEnabled;
-	
 	//Components	
 	UPROPERTY(EditAnywhere, Category="Camera")
 	class UInputMappingContext* InputMapping;
@@ -35,6 +32,9 @@ public:
 
 	UFUNCTION()
 	void OnCapsuleHit(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	
+	UFUNCTION()
+	void OnCapsuleOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UPROPERTY(EditAnywhere, Category="Movement")
 	float LaneSwitchSpeed = 1.f;
@@ -59,6 +59,10 @@ protected:
 	UInputAction* IA_Jump;
 	
 private:
+
+	class AChunkSpawner* ChunkSpawner;
+
+	virtual void PostInitializeComponents() override;
 
 	virtual void PossessedBy(AController* NewController) override;
 
@@ -100,8 +104,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Damage")
 	float IFrameTime = 1.5f;
-
-	
 
 	//HUD
 	UPROPERTY(EditAnywhere, Category="HUD")

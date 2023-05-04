@@ -1,6 +1,8 @@
 #include "InfiniteRunner/Public/MyCharacter.h"
 
+#include "ChunkSpawner.h"
 #include "DamageObstacle.h"
+#include "EmptyObstacle.h"
 #include "EnhancedInputComponent.h"
 #include "MyUIclass.h"
 #include "Blueprint/UserWidget.h"
@@ -9,7 +11,6 @@
 
 AMyCharacter::AMyCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	//Lane Array
@@ -28,6 +29,7 @@ void AMyCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AMyCharacter::OnCapsuleHit);
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMyCharacter::OnCapsuleOverlap);
 	
 	SetupLanes();
 	GetWorldTimerManager().SetTimer(ScoreModifierTimerHandle, this, &AMyCharacter::IncrementScoreModifier, 5.f, true);
@@ -36,11 +38,6 @@ void AMyCharacter::BeginPlay()
 	bIsMoving = false;
 	bCanBeDamaged = true;
 
-	if(MyHud)
-	{
-		MyHud->UpdateHealthText(HealthAmount);
-		MyHud->UpdateScoreText(Score);
-	}
 }
 
 void AMyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -51,6 +48,24 @@ void AMyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		MyHud->RemoveFromParent();
 		MyHud = nullptr;
+	}
+}
+
+void AMyCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	ChunkSpawner = nullptr;
+
+	ULevel* MyLevel = GetLevel();
+	
+	for (AActor* Actor : MyLevel->Actors)
+	{
+		if (AChunkSpawner* Spawner = Cast<AChunkSpawner>(Actor))
+		{
+			ChunkSpawner = Spawner;
+			break;
+		}
 	}
 }
 
@@ -66,12 +81,18 @@ void AMyCharacter::PossessedBy(AController* NewController)
 		SetupPlayerInputComponent(MyInputComponent);
 	}
 	
-	if(MyHudClass && bHudEnabled)
+	if(MyHudClass)
 	{
 		APlayerController* MyPlayerController = GetController<APlayerController>();
 		MyHud = CreateWidget<UMyUIclass>(MyPlayerController, MyHudClass);
 		check(MyHud);
 		MyHud->AddToViewport();
+	}
+	
+	if(MyHud)
+	{
+		MyHud->UpdateScoreText(Score);
+		MyHud->UpdateHealthText(HealthAmount);
 	}
 }
 
@@ -79,7 +100,7 @@ void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if(bHudEnabled && MyHud)
+	if(MyHud)
 	{
 		Score += DeltaTime * ScoreModifier;
 		MyHud->UpdateScoreText(Score);
@@ -126,18 +147,14 @@ void AMyCharacter::SetupLanes()
 
 void AMyCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, "Collided");
 	if(bCanBeDamaged && OtherActor->IsA<ADamageObstacle>())
 	{
 		bCanBeDamaged = false;
 		HealthAmount--;
 
 		OtherComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		if(bHudEnabled)
-		{
-			MyHud->UpdateHealthText(HealthAmount);
-		}
+		MyHud->UpdateHealthText(HealthAmount);
+		
 		if(HealthAmount <= 0)
 		{
 			HealthAmount = 0;
@@ -146,8 +163,20 @@ void AMyCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
-
 		GetWorldTimerManager().SetTimer(IFrameTimerHandle, this, &AMyCharacter::ResetIframe, IFrameTime, false);
+	}
+}
+
+void AMyCharacter::OnCapsuleOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if(OtherActor->IsA<AEmptyObstacle>())
+	{
+		float DespawnProbability = FMath::RandRange(0.f, 1.f);
+
+		if(DespawnProbability <= 0.25f)
+		{
+			ChunkSpawner->RemoveRandomObstacle(OtherActor);
+		}
 	}
 }
 
@@ -173,8 +202,6 @@ void AMyCharacter::SwitchLane(const FInputActionInstance& Instance)
     LaneIndex += NewLaneValue;
     LaneIndex = FMath::Clamp(LaneIndex, 0, LanePositions.Num() - 1);
 
-    GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, "Current Lane: " + FString::FromInt(LaneIndex));
-
     FVector CurrentLocation = GetActorLocation();
     FVector TargetLocation = FVector(CurrentLocation.X, LanePositions[LaneIndex], CurrentLocation.Z);
 
@@ -192,7 +219,6 @@ void AMyCharacter::OnMoveUpdate(FVector TargetLocation)
         GetWorldTimerManager().ClearTimer(MovementUpdateHandle);
         OnMovementComplete();
     	SetActorLocation(TargetLocation);
-    	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, "Movement complete");
     }
 }
 
@@ -215,7 +241,6 @@ void AMyCharacter::Jump()
 void AMyCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, "Landed");
   
 	bIsJumping = false;
 }

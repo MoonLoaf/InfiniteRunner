@@ -12,8 +12,5 @@ class INFINITERUNNER_API UGameOverWidget : public UUserWidget
 public:
 	//Call from widget blueprint?
 	UFUNCTION(BlueprintCallable)
-	void HandleRestartButtonClicked();
-
-	UFUNCTION(BlueprintCallable)
     void HandleQuitButtonClicked();
 };

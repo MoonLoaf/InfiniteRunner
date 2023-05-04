@@ -1,6 +1,15 @@
 #include "ChunkSpawner.h"
+#include "EmptyObstacle.h"
 #include "WorldChunk.h"
-#include "Kismet/GameplayStatics.h"
+
+const FVector AChunkSpawner::SpawnPoints[] = {
+	FVector(480.f, -170.f, 30.f),
+	FVector(480.f, 0.f, 30.f),
+	FVector(480.f, 170.f, 30.f),
+	FVector(-350.f, -170.f, 30.f),
+	FVector(-350.f, 0.f, 30.f),
+	FVector(-350.f, 170.f, 30.f)
+	};
 
 AChunkSpawner::AChunkSpawner()
 {
@@ -12,8 +21,6 @@ void AChunkSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-
 	FVector SpawnLocation = GetActorLocation();
 	AWorldChunk* FirstChunk = GetWorld()->SpawnActor<AWorldChunk>(GetRandomWorldChunkClass(), SpawnLocation, FRotator::ZeroRotator);
 	SpawnedChunks.Add(FirstChunk);
@@ -34,7 +41,7 @@ void AChunkSpawner::Tick(float DeltaTime)
 		if (FVector::DotProduct(GetActorForwardVector(), Chunk->GetActorLocation() - GetActorLocation()) < 0 && Distance > MaxChunkBehindDistance)
 		{
 			// If the chunk is too far away, remove it from the game and the array
-			Chunk->DestroyObstacles();
+			DestroyChunkObstacles(Chunk);
 			Chunk->Destroy();
 			SpawnedChunks.RemoveAt(i);
 		}
@@ -44,18 +51,50 @@ void AChunkSpawner::Tick(float DeltaTime)
 	if (SpawnedChunks.Num() > 0)
 	{
 		AWorldChunk* LastChunk = SpawnedChunks.Last();
-		if (LastChunk->GetChunkEnd() < GetActorLocation().X + GenerationDistance)
+		if (GetChunkEnd(LastChunk) < GetActorLocation().X + GenerationDistance)
 		{
-			FVector SpawnLocation = FVector(LastChunk->GetChunkEnd(), 0.f, 0.f);
+			FVector SpawnLocation = FVector(GetChunkEnd(LastChunk), 0.f, 0.f);
 			AWorldChunk* NewChunk = GetWorld()->SpawnActor<AWorldChunk>(GetRandomWorldChunkClass(), SpawnLocation, FRotator::ZeroRotator);
 			SpawnedChunks.Add(NewChunk);
 
 			if(SpawnedChunks.Num() > 2)
 			{
-				NewChunk->GenerateObstacles();
+				GenerateObstacles(NewChunk);
 			}
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, NewChunk->GetActorLocation().ToString());
 		}
+	}
+}
+
+void AChunkSpawner::GenerateObstacles(AWorldChunk* Chunk)
+{
+	for(int i = 0; i < UE_ARRAY_COUNT(SpawnPoints); i++)
+	{
+		bool ShouldSpawn = FMath::RandBool();
+		
+		if (ShouldSpawn && ObstacleClasses.Num() != 0)
+		{
+			AActor* SpawnedObstacle = GetWorld()->SpawnActor<AActor>(GetRandomObstacleClass(), SpawnPoints[i], FRotator(0.f, 180.f, 0.f));
+			SpawnedObstacles.Add(SpawnedObstacle);
+			SpawnedObstacle->AttachToActor(Chunk, FAttachmentTransformRules::KeepRelativeTransform);
+		}
+		else if(!ShouldSpawn && ObstacleClasses.Num() != 0)
+		{
+			AActor* SpawnedEmptyObstacle = GetWorld()->SpawnActor<AActor>(EmptyObstacle, SpawnPoints[i], FRotator::ZeroRotator);
+			SpawnedObstacles.Add(SpawnedEmptyObstacle);
+			SpawnedEmptyObstacle->AttachToActor(Chunk, FAttachmentTransformRules::KeepRelativeTransform);
+		}
+	}
+}
+
+void AChunkSpawner::RemoveRandomObstacle(AActor* DodgedObstacle)
+{
+	if (!SpawnedObstacles.Contains(DodgedObstacle)) { return; }
+	
+	if (Cast<AEmptyObstacle>(DodgedObstacle)->CheckActorAdjacency())
+	{
+		int ObstacleToRemove = FMath::RandRange(SpawnedObstacles.Find(DodgedObstacle) + 3, SpawnedObstacles.Num() - 1);
+		SpawnedObstacles[ObstacleToRemove]->SetActorHiddenInGame(true);
+		SpawnedObstacles[ObstacleToRemove]->SetActorEnableCollision(false);
 	}
 }
 
@@ -63,4 +102,32 @@ TSubclassOf<AWorldChunk> AChunkSpawner::GetRandomWorldChunkClass() const
 {
 	int32 Index = FMath::RandRange(0, WorldChunks.Num() - 1);
 	return WorldChunks[Index];
+}
+
+TSubclassOf<AActor> AChunkSpawner::GetRandomObstacleClass() const
+{
+	int32 Index = FMath::RandRange(0, ObstacleClasses.Num() - 1);
+	return ObstacleClasses[Index];
+}
+
+float AChunkSpawner::GetChunkEnd(AActor* Chunk) const
+{
+	return Chunk->GetActorLocation().X + 2000.f; //Very hardcoded, representing chunk size though
+}
+
+void AChunkSpawner::DestroyChunkObstacles(AActor* Chunk)
+{
+	TArray<AActor*> ChildActors;
+	Chunk->GetAttachedActors(ChildActors);
+
+	while (ChildActors.Num() > 0)
+	{
+		AActor* SpawnedObstacle = ChildActors[0];
+		if (SpawnedObstacle != nullptr)
+		{
+			SpawnedObstacles.Remove(SpawnedObstacle);
+			ChildActors.Remove(SpawnedObstacle);
+			SpawnedObstacle->Destroy();
+		}
+	}
 }

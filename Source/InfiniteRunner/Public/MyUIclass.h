@@ -19,6 +19,7 @@ public:
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	class UTextBlock* ScoreText;
+
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	class UTextBlock* HealthText;
 };

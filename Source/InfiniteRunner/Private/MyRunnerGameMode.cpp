@@ -12,7 +12,6 @@
 AMyRunnerGameMode::AMyRunnerGameMode()
 {
 	SpawnLocation = FVector(0.f, 0.f, 140.f);
-	
 }
 
 void AMyRunnerGameMode::BeginPlay()
@@ -42,7 +41,7 @@ void AMyRunnerGameMode::BeginPlay()
 		HighScoreWidgetInstance = CreateWidget<UHighScoreWidget>(GetWorld(), HighScoreWidgetClass);
 
 		HighScoreWidgetInstance->AddToViewport();
-		HighScoreWidgetInstance->DisplayHighScore();
+		HighScoreWidgetInstance->DisplayHighScores();
 	}
 
 	GetWorldTimerManager().SetTimer(GameSpeedUpdateHandle, this, &AMyRunnerGameMode::UpdateGameSpeed, GameSpeedUpdateInterval, true);
@@ -92,9 +91,6 @@ void AMyRunnerGameMode::OnGameOver()
 		UGameOverWidget* GameOverWidgetPtr = CreateWidget<UGameOverWidget>(GetWorld(), GameOverWidgetClass);
 		GameOverWidgetPtr->AddToViewport();
 
-		UButton* RestartButton = Cast<UButton>(GameOverWidgetPtr->GetWidgetFromName("RestartButton"));
-		RestartButton->OnClicked.AddDynamic(GameOverWidgetPtr, &UGameOverWidget::HandleRestartButtonClicked);
-
 		UButton* QuitButton = Cast<UButton>(GameOverWidgetPtr->GetWidgetFromName("QuitButton"));
 		QuitButton->OnClicked.AddDynamic(GameOverWidgetPtr, &UGameOverWidget::HandleQuitButtonClicked);
 	}
@@ -107,18 +103,40 @@ void AMyRunnerGameMode::OnGameOver()
 
 void AMyRunnerGameMode::CheckNewHighScore()
 {
-	if(Player1->Score < HighScoreWidgetInstance->LoadHighScore() && Player2->Score < HighScoreWidgetInstance->LoadHighScore())
-	{
-		return;
+	TArray<float> HighScores = HighScoreWidgetInstance->LoadHighScores();
+
+	bool bPlayer1ScoreAdded = false;
+	bool bPlayer2ScoreAdded = false;
+
+	for (int32 i = 0; i < HighScores.Num(); i++) {
+		if (!bPlayer1ScoreAdded && Player1->Score > HighScores[i]) {
+			HighScores.Insert(Player1->Score, i);
+			bPlayer1ScoreAdded = true;
+		}
+		else if (!bPlayer2ScoreAdded && Player2->Score > HighScores[i]) {
+			HighScores.Insert(Player2->Score, i);
+			bPlayer2ScoreAdded = true;
+		}
 	}
-	if(Player1->Score > Player2->Score && Player1->Score > HighScoreWidgetInstance->LoadHighScore())
+	if(HighScores.Num()!= 0)
 	{
-		HighScoreWidgetInstance->SaveHighScore(Player1->Score);
+		if (!bPlayer1ScoreAdded && Player1->Score > HighScores.Last()) {
+			HighScores.Add(Player1->Score);
+		}
+		if (!bPlayer2ScoreAdded && Player2->Score > HighScores.Last()) {
+			HighScores.Add(Player2->Score);
+		}
 	}
-	if(Player2->Score > Player1->Score && Player2->Score > HighScoreWidgetInstance->LoadHighScore())
-	{
-		HighScoreWidgetInstance->SaveHighScore(Player2->Score);
+
+	HighScores.Sort([](float A, float B) {
+		return A > B;
+	});
+
+	while (HighScores.Num() > 3) {
+		HighScores.RemoveAt(HighScores.Num() - 1);
 	}
+
+	HighScoreWidgetInstance->SaveHighScores(HighScores);
 }
 
 void AMyRunnerGameMode::Tick(float DeltaSeconds)

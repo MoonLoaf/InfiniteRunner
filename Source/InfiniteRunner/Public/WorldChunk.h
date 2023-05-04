@@ -16,9 +16,6 @@ public:
 	UPROPERTY(EditAnywhere, Category="Mesh")
 	UStaticMeshComponent* BaseMesh;
 
-	// UPROPERTY(EditAnywhere, Category="Loading")
-	// class UBoxComponent* ChunkGenerationBox;
-
 	UPROPERTY(EditAnywhere, Category = "Obstacles")
 	TArray<TSubclassOf<AActor>> ObstacleClasses;
 
@@ -28,14 +25,6 @@ public:
 	//Functions
 	AWorldChunk();
 
-	float GetChunkEnd() const;
-	
-	void IncreaseGameSpeed();
-
-	void DestroyObstacles();
-
-	void GenerateObstacles();
-	
 protected:
 	
 	virtual void BeginPlay() override;
@@ -44,12 +33,4 @@ protected:
 	
 	virtual void PostInitializeComponents() override;
 
-	
-	
-private:	
-
-
-	static const FVector SpawnPoints[];
-
-	TArray<AActor*> SpawnedObstacles;
 };
