@@ -16,7 +16,7 @@ I have also setup two different classes for the obstacles, since one of the type
 I've also set up a super simple UI using the UUserWidget class and a widget blueprint.
 
 
-##**__Part 2 Updates__**  
+**__Part 2 Updates__**  
 
 Bugs fixed:
 Since multiplayer was added I decoupled the chunkspawner from any reference to my player
