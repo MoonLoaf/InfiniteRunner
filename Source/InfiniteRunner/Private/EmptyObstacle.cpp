@@ -9,26 +9,23 @@ AEmptyObstacle::AEmptyObstacle()
 	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Box Component"));
 	TriggerBox->SetBoxExtent(FVector(20.f, 175.f, 150.f));
 	TriggerBox->SetGenerateOverlapEvents(true);
+	TriggerBox->SetVisibility(true);
 	SetRootComponent(TriggerBox);
 }
 
 bool AEmptyObstacle::CheckActorAdjacency()
 {
-	bObstacleAdjacent = false;
-	
-	TArray<AActor*> OverlappedActors;
-	
-	TriggerBox->GetOverlappingActors(OverlappedActors);
+	TArray<AActor*> OverlappingActors;
+	TriggerBox->GetOverlappingActors(OverlappingActors);
 
-	for (AActor* OverlappingActor : OverlappedActors)
+	for (AActor* OverlappingActor : OverlappingActors)
 	{
-		if (OverlappingActor == this) { continue; }
-
 		if (OverlappingActor->IsA<AObstacleBase>() || OverlappingActor->IsA<ADamageObstacle>())
 		{
-			bObstacleAdjacent = true;
-			return bObstacleAdjacent;
+			return true;
 		}
 	}
-	return bObstacleAdjacent;
+	
+	return false;
 }
+

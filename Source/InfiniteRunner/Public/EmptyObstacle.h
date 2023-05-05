@@ -15,8 +15,6 @@ public:
 
 	bool CheckActorAdjacency();
 
-	bool bObstacleAdjacent;
-	
 	UPROPERTY(EditAnywhere, Category="Collision")
 	class UBoxComponent* TriggerBox;
 	

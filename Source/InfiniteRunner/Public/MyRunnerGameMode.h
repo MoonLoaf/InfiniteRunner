@@ -19,9 +19,6 @@ public:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	UPROPERTY(EditAnywhere, Category="Player 2")
-	bool bIsMultiplayer;
-
 	UPROPERTY(EditAnywhere, Category="Game Speed")
 	float GameSpeed = 400.f;
 
@@ -46,6 +43,9 @@ private:
 	AMyCharacter* Player1;
 	AMyCharacter* Player2;
 
+	class APlayerController* Player1Controller;
+	APlayerController* Player2Controller;
+	
 	FTimerHandle GameSpeedUpdateHandle;
 
 	void UpdateGameSpeed();

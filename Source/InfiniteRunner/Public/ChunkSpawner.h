@@ -20,7 +20,7 @@ public:
 	
 	void GenerateObstacles(AWorldChunk* Chunk);
 
-	void RemoveRandomObstacle(AActor* DodgedObstacle);
+	void RemoveRandomObstacle(class AEmptyObstacle* DodgedObstacle);
 
 protected:
 	// Called when the game starts or when spawned
@@ -58,4 +58,5 @@ private:
 	static const FVector SpawnPoints[];
 
 	TArray<AActor*> SpawnedObstacles;
+	TArray<AActor*> EmptyObstacles;
 };

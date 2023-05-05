@@ -77,25 +77,22 @@ void AChunkSpawner::GenerateObstacles(AWorldChunk* Chunk)
 			SpawnedObstacles.Add(SpawnedObstacle);
 			SpawnedObstacle->AttachToActor(Chunk, FAttachmentTransformRules::KeepRelativeTransform);
 		}
-		else if(!ShouldSpawn && ObstacleClasses.Num() != 0)
+		else if(!ShouldSpawn)
 		{
 			AActor* SpawnedEmptyObstacle = GetWorld()->SpawnActor<AActor>(EmptyObstacle, SpawnPoints[i], FRotator::ZeroRotator);
-			SpawnedObstacles.Add(SpawnedEmptyObstacle);
+			EmptyObstacles.Add(SpawnedEmptyObstacle);
 			SpawnedEmptyObstacle->AttachToActor(Chunk, FAttachmentTransformRules::KeepRelativeTransform);
 		}
 	}
 }
 
-void AChunkSpawner::RemoveRandomObstacle(AActor* DodgedObstacle)
+void AChunkSpawner::RemoveRandomObstacle(AEmptyObstacle* DodgedObstacle)
 {
-	if (!SpawnedObstacles.Contains(DodgedObstacle)) { return; }
-	
-	if (Cast<AEmptyObstacle>(DodgedObstacle)->CheckActorAdjacency())
-	{
-		int ObstacleToRemove = FMath::RandRange(SpawnedObstacles.Find(DodgedObstacle) + 3, SpawnedObstacles.Num() - 1);
-		SpawnedObstacles[ObstacleToRemove]->SetActorHiddenInGame(true);
-		SpawnedObstacles[ObstacleToRemove]->SetActorEnableCollision(false);
-	}
+	int Index = SpawnedObstacles.Find(DodgedObstacle) + 4;
+	Index = FMath::Clamp(Index, 0, SpawnedObstacles.Num() - 1);
+
+	SpawnedObstacles[Index]->SetActorHiddenInGame(true);
+	SpawnedObstacles[Index]->SetActorEnableCollision(false);
 }
 
 TSubclassOf<AWorldChunk> AChunkSpawner::GetRandomWorldChunkClass() const
@@ -125,9 +122,17 @@ void AChunkSpawner::DestroyChunkObstacles(AActor* Chunk)
 		AActor* SpawnedObstacle = ChildActors[0];
 		if (SpawnedObstacle != nullptr)
 		{
-			SpawnedObstacles.Remove(SpawnedObstacle);
+			if (SpawnedObstacles.Contains(SpawnedObstacle))
+			{
+				SpawnedObstacles.Remove(SpawnedObstacle);
+			}
+			else if (EmptyObstacles.Contains(SpawnedObstacle))
+			{
+				EmptyObstacles.Remove(SpawnedObstacle);
+			}
 			ChildActors.Remove(SpawnedObstacle);
 			SpawnedObstacle->Destroy();
 		}
 	}
 }
+

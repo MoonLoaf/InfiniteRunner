@@ -17,23 +17,36 @@ AMyRunnerGameMode::AMyRunnerGameMode()
 void AMyRunnerGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+	Player1Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	Player2Controller = UGameplayStatics::GetPlayerController(GetWorld(), 1);
 	
 	Player1 = GetWorld()->SpawnActor<AMyCharacter>(Player1Class, SpawnLocation, FRotator::ZeroRotator);
-	ULocalPlayer* LocalPlayer1 = GetGameInstance()->GetLocalPlayerByIndex(0);
-	APlayerController* Player1Controller = LocalPlayer1->GetPlayerController(GetWorld());
-
+	Player2 = GetWorld()->SpawnActor<AMyCharacter>(Player2Class, SpawnLocation, FRotator::ZeroRotator);
+	
 	if (Player1 && Player1Controller)
 	{
 		Player1Controller->Possess(Player1);
+		Player1Controller->SetInputMode(FInputModeGameOnly());
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green ,"Player 1 Posessed");
 		UE_LOG(LogTemp, Warning, TEXT("Player 1 possessed by %d"), Player1Controller->GetLocalPlayer()->GetLocalPlayerIndex());
 	}
-
-	if (bIsMultiplayer)
+	else if(!Player1Controller)
 	{
-		APlayerController* Player2Controller = UGameplayStatics::CreatePlayer(GetWorld(), 1, true);
-		Player2 = GetWorld()->SpawnActor<AMyCharacter>(Player2Class, SpawnLocation, FRotator::ZeroRotator);
+		Player1Controller = UGameplayStatics::CreatePlayer(GetWorld(), 0, true);
+		Player1Controller->SetInputMode(FInputModeGameOnly());
+		Player1Controller->Possess(Player1);
+	}
+	if(Player2 && Player2Controller)
+	{
 		Player2Controller->Possess(Player2);
+		Player2Controller->SetInputMode(FInputModeGameOnly());
 		UE_LOG(LogTemp, Warning, TEXT("Player 2 possessed by %d"), Player2Controller->GetLocalPlayer()->GetLocalPlayerIndex());
+	}
+	else if(!Player2Controller)
+	{
+		Player2Controller = UGameplayStatics::CreatePlayer(GetWorld(), 1, true);
+		Player2Controller->SetInputMode(FInputModeGameOnly());
+		Player2Controller->Possess(Player2);
 	}
 
 	if(HighScoreWidgetClass)
@@ -46,6 +59,9 @@ void AMyRunnerGameMode::BeginPlay()
 
 	GetWorldTimerManager().SetTimer(GameSpeedUpdateHandle, this, &AMyRunnerGameMode::UpdateGameSpeed, GameSpeedUpdateInterval, true);
 
+
+	//Debug
+	
 	UWorld* World = GetWorld();
 	TArray<APlayerController*> Controllers;
 	
@@ -70,6 +86,17 @@ void AMyRunnerGameMode::BeginPlay()
 void AMyRunnerGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
+
+	if(Player1Controller)
+	{
+		Player1Controller->Destroy();
+		Player1Controller = nullptr;
+	}
+	if(Player2Controller)
+	{
+		Player2Controller->Destroy();
+		Player2Controller = nullptr;
+	}
 }
 
 void AMyRunnerGameMode::UpdateGameSpeed()
@@ -93,6 +120,19 @@ void AMyRunnerGameMode::OnGameOver()
 
 		UButton* QuitButton = Cast<UButton>(GameOverWidgetPtr->GetWidgetFromName("QuitButton"));
 		QuitButton->OnClicked.AddDynamic(GameOverWidgetPtr, &UGameOverWidget::HandleQuitButtonClicked);
+	}
+
+	Player1Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	Player2Controller = UGameplayStatics::GetPlayerController(GetWorld(), 1);
+
+	if (Player1Controller)
+	{
+		Player1Controller->UnPossess();
+	}
+
+	if (Player2Controller)
+	{
+		Player2Controller->UnPossess();
 	}
 
 	APlayerController* Controller = GetWorld()->GetFirstPlayerController();

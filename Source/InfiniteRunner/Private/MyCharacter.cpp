@@ -8,6 +8,7 @@
 #include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 
 AMyCharacter::AMyCharacter()
 {
@@ -17,6 +18,9 @@ AMyCharacter::AMyCharacter()
 	LanePositions.Add(0.f);
 	LanePositions.Add(0.f);
 	LanePositions.Add(0.f);
+
+	DodgeDetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Dodge Detection Sphere"));
+	DodgeDetectionSphere->SetupAttachment(RootComponent);
 
 	//HUD
 	MyHudClass = nullptr;
@@ -29,7 +33,7 @@ void AMyCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AMyCharacter::OnCapsuleHit);
-	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMyCharacter::OnCapsuleOverlap);
+	DodgeDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &AMyCharacter::OnCapsuleOverlap);
 	
 	SetupLanes();
 	GetWorldTimerManager().SetTimer(ScoreModifierTimerHandle, this, &AMyCharacter::IncrementScoreModifier, 5.f, true);
@@ -72,14 +76,6 @@ void AMyCharacter::PostInitializeComponents()
 void AMyCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	
-	UE_LOG(LogTemp, Warning, TEXT("Player possessed by %d"), Cast<APlayerController>(NewController)->GetLocalPlayer()->GetLocalPlayerIndex());
-	
-	MyInputComponent = CreatePlayerInputComponent();
-	if(MyInputComponent)
-	{
-		SetupPlayerInputComponent(MyInputComponent);
-	}
 	
 	if(MyHudClass)
 	{
@@ -130,7 +126,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		MyEnhancedInputComponent->BindAction(IA_SwitchLane, ETriggerEvent::Started, this, &AMyCharacter::SwitchLane);
 		//Jumping
 		MyEnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Started, this, &AMyCharacter::Jump);
-		
+
 		UE_LOG(LogTemp,Warning,TEXT("Setup Bindings Succesfully"));
 	}
 }
@@ -161,6 +157,7 @@ void AMyCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 			SetActorHiddenInGame(true);
 			SetActorTickEnabled(false);
 
+			DodgeDetectionSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 		GetWorldTimerManager().SetTimer(IFrameTimerHandle, this, &AMyCharacter::ResetIframe, IFrameTime, false);
@@ -169,13 +166,14 @@ void AMyCharacter::OnCapsuleHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 
 void AMyCharacter::OnCapsuleOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if(OtherActor->IsA<AEmptyObstacle>())
+	if (AEmptyObstacle* EmptyObstacle = Cast<AEmptyObstacle>(OtherActor))
 	{
-		float DespawnProbability = FMath::RandRange(0.f, 1.f);
-
-		if(DespawnProbability <= 0.25f)
+		float SpawnProbability = FMath::RandRange(0.f,1.f);
+		
+		if(SpawnProbability < 0.25f && EmptyObstacle->CheckActorAdjacency())
 		{
-			ChunkSpawner->RemoveRandomObstacle(OtherActor);
+			GEngine->AddOnScreenDebugMessage(-1, 2.f,FColor::Red, "ObstacleAdjecent");
+			ChunkSpawner->RemoveRandomObstacle(EmptyObstacle);
 		}
 	}
 }
