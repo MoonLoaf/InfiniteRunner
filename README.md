@@ -1,4 +1,6 @@
 # InfiniteRunner
+
+**__Part 1__**
 Assignment for my C++ game programming course
 
 The game system is based primarily on a spawner that contains a TArray of TSubclasses of WorldChunks (Actors). These worldchunks are handmade in the sense that there are four visually different chunks.
@@ -14,7 +16,7 @@ I have also setup two different classes for the obstacles, since one of the type
 I've also set up a super simple UI using the UUserWidget class and a widget blueprint.
 
 
-Part 2 Update
+**__Part 2 Updates__**
 
 Bugs fixed:
 Since multiplayer was added I decoupled the chunkspawner from any reference to my player
@@ -29,8 +31,11 @@ Added Multiplayer by creating another instance of playercontroller and player bl
 
 I want to point out that the enhanced input system is currently broken for this sort of implementation of multiplayer in Unreal 5.1[Link to reported bug](https://issues.unrealengine.com/issue/UE-169979)
 
-This bug first appeared to me quite late in my project and I want to emphasize that I have spent a lot of time trying to solve and debug this before realizing this is a known issue, which is why I have left most of my debugging in my code. The work around I have found for this is plugging in Keyboard+moouse and TWO separate gamepads, one of which will control player 2. Sometimes this works with just one gamepad.
+__IMPORTANT__
+This bug first appeared to me quite late in my project and I want to emphasize that I have spent a lot of time trying to solve and debug this before realizing this is a known issue, which is why I have left most of my debugging in my code. The work around I have found for this is plugging in Keyboard+moouse and *TWO* separate gamepads, one of which will control player 2. Sometimes this works with just one gamepad.
 
 Moved all chunk and obstacle generation logic into ChunkSpawner to easier implement the despawning of obstacles by having a single array of all obstacles[File in Commit](https://github.com/MoonLoaf/InfiniteRunner/commit/925b6893c07ac504ae477c92b5836baa9821d3b6#diff-5daa2f216710b0b30ac0439e30c18e78bad3fc13f97a34915b392ea668cd849f)
 
 Added "Empty Obstacles" which checks for other obstacles around it to confirm that a player has dodged an obstacle. This uses the players capsule collider component, and if a random number between 0 and 1 is less than .25, it calls a function in chunkSpawner to remove a random obstacle further down [File in Commit](https://github.com/MoonLoaf/InfiniteRunner/commit/925b6893c07ac504ae477c92b5836baa9821d3b6#diff-7c80e1579b613422ebc81d8ff64f681df8adb2fe4c7fbfa64c447f25d979d8d5)
+
+Fixed a bug where the despawning of obstacles sometimes despawned the despawner-"obstacles"![File in Commit](https://github.com/MoonLoaf/InfiniteRunner/commit/a2ff8d84e038d1e1b870c7e9665e174309c722ea#diff-5daa2f216710b0b30ac0439e30c18e78bad3fc13f97a34915b392ea668cd849f)
